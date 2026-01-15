@@ -1,0 +1,62 @@
+function generatePlanLocal() {
+  const today = new Date();
+  const todayStr = today.toISOString().slice(0, 10);
+  const nowTime = `${String(today.getHours()).padStart(2, '0')}:${String(today.getMinutes()).padStart(2, '0')}`;
+
+  const settings = {
+    workdayStart: document.getElementById('workdayStart')?.value || '09:00',
+    workdayEnd: document.getElementById('workdayEnd')?.value || '17:00',
+    primeHours: document.getElementById('primeHours')?.value || '09:00-15:00',
+    downtimeHours: document.getElementById('downtimeHours')?.value || '19:00-22:00',
+    meetingBlocks: document.getElementById('meetingBlocks')?.value || '',
+  };
+
+  const pendingTasks = tasks.filter((t) => (t.status || 'Not Started') !== 'Completed');
+  const normalized = [];
+  pendingTasks.forEach((t, idx) => {
+    autoSplitTask(t, `task-${idx}`).forEach((chunk) => normalized.push(chunk));
+  });
+
+  const slots = buildSlots(settings);
+  const planBlocks = [];
+  const remaining = [...normalized];
+
+  for (const slot of slots) {
+    // score per slot because prime hours penalize system tasks
+    const scored = remaining
+      .map((t) => ({ ...t, _score: revenueScore(t, todayStr, slot.label) }))
+      .sort((a, b) => b._score - a._score);
+
+    const pick = scored.find((t) => taskFitsSlot(t, slot));
+    if (!pick) continue;
+
+    // remove by planner id
+    const removeIndex = remaining.findIndex((x) => x._plannerId === pick._plannerId);
+    if (removeIndex >= 0) remaining.splice(removeIndex, 1);
+
+    const blockEnd = minutesToTime(timeToMinutes(slot.start) + Number(pick.estimateMins || 30));
+    planBlocks.push({
+      start: slot.start,
+      end: blockEnd,
+      title: pick.title,
+      reason: pick.dealId ? 'Deal-moving task' : (pick.type || 'Delivery') === 'Revenue' ? 'Revenue task' : 'Progress task',
+    });
+  }
+
+  const doNow = planBlocks.find((b) => timeToMinutes(b.end) >= timeToMinutes(nowTime)) || planBlocks[0] || null;
+  const doNowIndex = doNow ? planBlocks.findIndex((b) => b.start === doNow.start && b.title === doNow.title) : -1;
+  const nextUp = doNowIndex >= 0 ? planBlocks.slice(doNowIndex + 1, doNowIndex + 4) : [];
+  const tonight = planBlocks
+    .filter((b) => inAnyRange(b.start, parseRanges(settings.downtimeHours)))
+    .slice(0, 3);
+
+  lastPlan = { todayStr, nowTime, planBlocks, doNow, nextUp, tonight };
+  renderPlanner(lastPlan);
+}
+
+function renderPlanner(plan) {
+  const doNowEl = document.getElementById('doNowCard');
+  const nextUpEl = document.getElementById('nextUpList');
+  const tonightEl = document.getElementById('tonightList');
+  const timelineEl = document.getElementById('planTimeline');
+  if (!doNowEl || !nextUpEl || !tonightEl || !timelineEl) retu
