@@ -5,20 +5,6 @@
 // counts/charts.  See accompanying index.html and style.css for markup
 // and styling.  This file is written as an ES module.
 
-// Prevents HTML injection / broken popups when rendering business names, notes, etc.
-function escapeHtml(input = "") {
-  return String(input).replace(/[&<>"'`=\/]/g, (s) => ({
-    "&": "&amp;",
-    "<": "&lt;",
-    ">": "&gt;",
-    '"': "&quot;",
-    "'": "&#39;",
-    "`": "&#x60;",
-    "=": "&#x3D;",
-    "/": "&#x2F;",
-  }[s]));
-}
-
 // Data arrays representing contacts, deals and tasks.  On start up
 // these arrays are loaded from localStorage (if present); otherwise
 // they are seeded with empty arrays.  Activities represent the audit
@@ -35,6 +21,20 @@ let editingTaskIndex = null;
 
 // Chart instance for the pipeline overview
 let pipelineChart = null;
+
+// Prevents HTML injection / broken popups when rendering business names, notes, etc.
+function escapeHtml(input = "") {
+  return String(input).replace(/[&<>"'`=\/]/g, (s) => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#39;",
+    "`": "&#x60;",
+    "=": "&#x3D;",
+    "/": "&#x2F;",
+  }[s]));
+}
 
 /** Utility to load data from localStorage.  Because localStorage only
  * stores strings the arrays are parsed from JSON.  If any key is
