@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>ForgeOS Login</title>
+  <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+</head>
+<body>
+  <h1>ForgeOS CRM</h1>
+  <button onclick="netlifyIdentity.open()">Login</button>
+
+  <script>
+    netlifyIdentity.on("login", user => {
+      window.location.href = "/";
+    });
+  </script>
+</body>
+</html>
