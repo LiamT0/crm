@@ -59,8 +59,16 @@ body {
   margin-bottom: 1.5rem;
   font-size: 1.2rem;
 }
-.logo ion-icon {
-  font-size: 1.6rem;
+
+/* Inline SVG brand icon */
+.brand-icon {
+  width: 1.6rem;
+  height: 1.6rem;
+  display: inline-block;
+  flex: 0 0 auto;
+}
+.brand-icon path {
+  fill: currentColor;
 }
 
 .sidebar nav ul {

@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>CRM Dashboard</title>
+    <title>ForgeOS CRM</title>
     <!-- Google fonts for modern, professional typography -->
     <link
       href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
@@ -27,8 +27,12 @@
            which corresponds to the id of the section it displays. -->
       <aside class="sidebar">
         <div class="logo">
-          <ion-icon name="bag-handle"></ion-icon>
-          <span>CRM</span>
+          <!-- ForgeOS mark (anvil + hammer) as inline SVG so it works without any icon libraries -->
+          <svg class="brand-icon" width="22" height="22" viewBox="0 0 24 24" aria-hidden="true">
+            <path fill="currentColor" d="M3 14.5c0-.55.45-1 1-1h5.2c.3-1.1 1.1-2 2.2-2.5l4.1-1.7c.5-.2.8-.7.7-1.2l-.1-.6 1.9-.5.2.7c.3 1.3-.4 2.6-1.6 3.1l-4.1 1.7c-.7.3-1.2 1-1.2 1.8v.2H20c.55 0 1 .45 1 1v2.5c0 1.38-1.12 2.5-2.5 2.5H9.2c-.9 0-1.74-.48-2.18-1.27L6.2 19.5H4.5C3.67 19.5 3 18.83 3 18v-3.5z"/>
+            <path fill="currentColor" d="M7.8 3.6 9.2 2.2l3.5 3.5-1.4 1.4-.5-.5-4.3 4.3-1.4-1.4 4.3-4.3-.6-.6z"/>
+          </svg>
+          <span>ForgeOS</span>
         </div>
         <nav>
           <ul>
@@ -141,10 +145,6 @@
               <button class="btn secondary" id="importContactsButton">
                 <ion-icon name="download-outline"></ion-icon>
                 Import
-              </button>
-              <button class="btn secondary" id="generateLeadsButton">
-                <ion-icon name="flash-outline"></ion-icon>
-                Generate Leads
               </button>
               <button class="btn primary" id="addContactButton">
                 <ion-icon name="add"></ion-icon>

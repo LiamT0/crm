@@ -65,56 +65,51 @@ exports.handler = async function handler(event) {
     }
     const loc = geo.results[0].geometry.location;
 
-    // 2) Nearby search for businesses matching the keyword
-    const nearbyUrl = new URL('https://maps.googleapis.com/maps/api/place/nearbysearch/json');
-    nearbyUrl.searchParams.set('location', `${loc.lat},${loc.lng}`);
-    nearbyUrl.searchParams.set('radius', String(milesToMeters(radiusMiles)));
-    nearbyUrl.searchParams.set('keyword', keyword);
-    nearbyUrl.searchParams.set('key', apiKey);
+    // 2) Places API (New): searchText (avoids legacy Nearby Search)
+    const placesUrl = 'https://places.googleapis.com/v1/places:searchText';
+    const body = {
+      textQuery: `${keyword} in ${locationText}`,
+      maxResultCount: limit,
+      locationBias: {
+        circle: {
+          center: { latitude: loc.lat, longitude: loc.lng },
+          radius: milesToMeters(radiusMiles),
+        },
+      },
+    };
 
-    const { data: near } = await fetchJson(nearbyUrl.toString());
-    if (near.status !== 'OK' && near.status !== 'ZERO_RESULTS') {
-      return json(500, { error: 'Nearby search failed', status: near.status, message: near.error_message });
+    const res = await fetch(placesUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Goog-Api-Key': apiKey,
+        // Request only what we need so responses are fast + cheap
+        'X-Goog-FieldMask':
+          'places.id,places.displayName,places.formattedAddress,places.location,places.rating,places.userRatingCount,places.websiteUri,places.nationalPhoneNumber',
+      },
+      body: JSON.stringify(body),
+    });
+
+    const data = await res.json();
+    if (!res.ok) {
+      return json(500, {
+        error: 'Nearby search failed',
+        status: data?.error?.status || res.status,
+        message: data?.error?.message || JSON.stringify(data),
+      });
     }
 
-    const results = (near.results || []).slice(0, limit);
-
-    // 3) Enrich with phone + website (Details API)
-    const detailsLimit = Math.min(
-      Math.max(Number(process.env.GOOGLE_PLACES_DETAILS_LIMIT || '10'), 0),
-      25
-    );
-
-    const enriched = [];
-    for (let i = 0; i < results.length; i++) {
-      const r = results[i];
-      const base = {
-        place_id: r.place_id,
-        name: r.name,
-        address: r.vicinity || r.formatted_address || '',
-        rating: r.rating ?? null,
-        user_ratings_total: r.user_ratings_total ?? 0,
-        lat: r.geometry?.location?.lat ?? null,
-        lng: r.geometry?.location?.lng ?? null,
-        website: '',
-        phone: '',
-      };
-
-      if (i < detailsLimit) {
-        const detailsUrl = new URL('https://maps.googleapis.com/maps/api/place/details/json');
-        detailsUrl.searchParams.set('place_id', r.place_id);
-        detailsUrl.searchParams.set('fields', 'formatted_phone_number,website');
-        detailsUrl.searchParams.set('key', apiKey);
-
-        const { data: det } = await fetchJson(detailsUrl.toString());
-        if (det.status === 'OK') {
-          base.website = det.result?.website || '';
-          base.phone = det.result?.formatted_phone_number || '';
-        }
-      }
-
-      enriched.push(base);
-    }
+    const enriched = (data.places || []).map((p) => ({
+      place_id: p.id,
+      name: p.displayName?.text || '',
+      address: p.formattedAddress || '',
+      rating: p.rating ?? null,
+      user_ratings_total: p.userRatingCount ?? 0,
+      lat: p.location?.latitude ?? null,
+      lng: p.location?.longitude ?? null,
+      website: p.websiteUri || '',
+      phone: p.nationalPhoneNumber || '',
+    }));
 
     return json(200, { center: loc, leads: enriched });
   } catch (err) {

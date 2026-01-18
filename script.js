@@ -22,20 +22,6 @@ let editingTaskIndex = null;
 // Chart instance for the pipeline overview
 let pipelineChart = null;
 
-// Prevents HTML injection / broken popups when rendering business names, notes, etc.
-function escapeHtml(input = "") {
-  return String(input).replace(/[&<>"'`=\/]/g, (s) => ({
-    "&": "&amp;",
-    "<": "&lt;",
-    ">": "&gt;",
-    '"': "&quot;",
-    "'": "&#39;",
-    "`": "&#x60;",
-    "=": "&#x3D;",
-    "/": "&#x2F;",
-  }[s]));
-}
-
 /** Utility to load data from localStorage.  Because localStorage only
  * stores strings the arrays are parsed from JSON.  If any key is
  * missing the associated array remains empty. */
@@ -69,6 +55,16 @@ function formatDate(date) {
   const d = new Date(date);
   const options = { month: 'short', day: 'numeric', year: 'numeric' };
   return d.toLocaleDateString(undefined, options);
+}
+
+/** Safely escape text for HTML injection into innerHTML templates. */
+function escapeHtml(input) {
+  return String(input ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
 }
 
 /** Add an activity log entry to the front of the activities array.
@@ -1514,7 +1510,7 @@ function renderPlannerCalendar(weekStartDate){
           tasks[tIndex].status = (tasks[tIndex].status === 'Completed') ? 'Pending' : 'Completed';
           saveData();
           renderTasks();
-          renderDashboard();
+          updateDashboard();
         }
         ev.completed = !ev.completed;
         block.classList.toggle('completed', ev.completed);
@@ -1596,7 +1592,8 @@ function init() {
     e.target.value = '';
   });
   // Generate leads
-  document.getElementById('generateLeadsButton').addEventListener('click', () => {
+  // Contacts page no longer includes the "Generate Leads" shortcut.
+  document.getElementById('generateLeadsButton')?.addEventListener('click', () => {
     generateRandomLeads();
   });
   // AI assistant
@@ -1658,6 +1655,133 @@ function placesEndpoint() {
   }
   // Vercel / generic convention
   return base + '/api/places';
+}
+
+// =========================
+// Neon-backed CRM API helpers (Netlify Functions)
+// - Same-origin when running on Netlify
+// - These are NO-OP on GitHub Pages unless you point the app at your Netlify URL
+// =========================
+
+async function crmApiFetch(url, options = {}) {
+  const res = await fetch(url, {
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...(options.headers || {}),
+    },
+  });
+  if (!res.ok) {
+    const text = await res.text().catch(() => '');
+    throw new Error(text || `HTTP ${res.status}`);
+  }
+  // Some endpoints may return empty
+  const contentType = res.headers.get('content-type') || '';
+  if (!contentType.includes('application/json')) return null;
+  return res.json();
+}
+
+function companiesApiUrl() {
+  // If you deploy on Netlify: same-origin works.
+  // If you run this on GitHub Pages: set crm_api_base to your Netlify URL.
+  const base = getApiBase();
+  return base
+    ? base.replace(/\/$/, '') + '/.netlify/functions/companies'
+    : '/.netlify/functions/companies';
+}
+
+function contactsApiUrl() {
+  const base = getApiBase();
+  return base
+    ? base.replace(/\/$/, '') + '/.netlify/functions/contacts'
+    : '/.netlify/functions/contacts';
+}
+
+function activitiesApiUrl() {
+  const base = getApiBase();
+  return base
+    ? base.replace(/\/$/, '') + '/.netlify/functions/activities'
+    : '/.netlify/functions/activities';
+}
+
+async function createCompanyFromLead(lead) {
+  const payload = {
+    name: lead.name || '',
+    status: lead.status || 'unknown',
+    phone: lead.phone || null,
+    website: lead.website || null,
+    address: lead.address || null,
+    lat: typeof lead.lat === 'number' ? lead.lat : null,
+    lng: typeof lead.lng === 'number' ? lead.lng : null,
+    rating: lead.rating ?? null,
+    reviews: lead.user_ratings_total ?? 0,
+    external_place_id: lead.id || null,
+  };
+
+  const company = await crmApiFetch(companiesApiUrl(), {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+
+  // Tie it back so future status changes can sync
+  lead.company_id = company?.id;
+  saveLeads();
+
+  // log activity (best-effort)
+  try {
+    await crmApiFetch(activitiesApiUrl(), {
+      method: 'POST',
+      body: JSON.stringify({
+        entity_type: 'company',
+        entity_id: company?.id,
+        activity_type: 'note',
+        body: `Saved from Lead Map. Keyword: ${lead.keyword || ''}`,
+        outcome: 'created',
+      }),
+    });
+  } catch (e) {
+    // ignore
+  }
+
+  return company;
+}
+
+async function updateCompanyStatus(companyId, status) {
+  if (!companyId) return;
+  try {
+    await crmApiFetch(companiesApiUrl(), {
+      method: 'PATCH',
+      body: JSON.stringify({ id: companyId, status }),
+    });
+  } catch (e) {
+    console.warn('Failed to update company status', e);
+  }
+}
+
+async function hideLeadsThatAlreadyExistInDb() {
+  // If the API base isn't set and you aren't on Netlify, skip.
+  const base = getApiBase();
+  const runningOnNetlify = location.hostname.includes('netlify.app');
+  if (!runningOnNetlify && !base) return;
+
+  try {
+    const companies = await crmApiFetch(companiesApiUrl(), { method: 'GET' });
+    const existing = new Set(
+      (companies || [])
+        .map((c) => c.external_place_id)
+        .filter(Boolean)
+        .map(String)
+    );
+    const before = leads.length;
+    leads = leads.filter((l) => !existing.has(String(l.id)));
+    const removed = before - leads.length;
+    if (removed > 0) {
+      saveLeads();
+      addActivity(`Lead Map: hid ${removed} leads already saved to CRM`);
+    }
+  } catch (e) {
+    // ignore
+  }
 }
 
 function ensureLeadMap() {
@@ -1811,7 +1935,7 @@ function renderLeadMarkers() {
           <option value="lost">Lost</option>
         </select>
         <div class="lead-actions">
-          <button class="small-btn primary" id="btnAddToContacts">Add to Contacts</button>
+          <button class="small-btn primary" id="btnSaveCompany">Save to Companies</button>
           <button class="small-btn" id="btnClose">Close</button>
         </div>
       `;
@@ -1821,17 +1945,22 @@ function renderLeadMarkers() {
         const sel = popup.querySelector('#leadStatusSel');
         if (sel) {
           sel.value = lead.status || 'new';
-          sel.addEventListener('change', () => {
+          sel.addEventListener('change', async () => {
             lead.status = sel.value;
             saveLeads();
             renderLeadsTable();
             updateLeadMetrics();
+            try {
+              await syncCompanyStatusFromLead(lead);
+            } catch (e) {
+              console.warn('Failed to sync company status', e);
+            }
           });
         }
-        const btn = popup.querySelector('#btnAddToContacts');
+        const btn = popup.querySelector('#btnSaveCompany');
         if (btn) {
-          btn.addEventListener('click', () => {
-            addLeadToContacts(lead);
+          btn.addEventListener('click', async () => {
+            await saveLeadAsCompany(lead);
           });
         }
         const close = popup.querySelector('#btnClose');
@@ -1883,21 +2012,26 @@ function renderLeadsTable() {
         </select>
       </td>
       <td>
-        <button class="btn secondary" data-add-contact>Add</button>
+        <button class="btn secondary" data-add-contact>Save</button>
         <button class="btn danger" data-remove-lead>Remove</button>
       </td>
     `;
 
     const sel = tr.querySelector('[data-lead-status]');
     sel.value = lead.status || 'new';
-    sel.addEventListener('change', () => {
+    sel.addEventListener('change', async () => {
       lead.status = sel.value;
       saveLeads();
       updateLeadMetrics();
       renderLeadMarkers();
+      try {
+        await syncCompanyStatusFromLead(lead);
+      } catch (e) {
+        console.warn('Failed to sync company status', e);
+      }
     });
 
-    tr.querySelector('[data-add-contact]').addEventListener('click', () => addLeadToContacts(lead));
+    tr.querySelector('[data-add-contact]').addEventListener('click', async () => saveLeadAsCompany(lead));
     tr.querySelector('[data-remove-lead]').addEventListener('click', () => {
       leads = leads.filter((x) => x !== lead);
       saveLeads();
@@ -2004,23 +2138,61 @@ async function runLeadSearch() {
   }
 }
 
-function addLeadToContacts(lead) {
-  const c = {
-    name: lead.name || '',
-    email: '',
-    phone: lead.phone || '',
-    company: lead.name || '',
-    position: 'Owner/Manager',
-    status: 'Lead',
-    source: 'Lead Map',
-    notes: `Address: ${lead.address || ''}\nWebsite: ${lead.website || 'None found'}\nKeyword: ${lead.keyword || ''}`,
-  };
-  contacts.push(c);
-  saveData();
-  renderContacts();
-  updateDashboard();
-  addActivity(`Added lead to contacts: ${lead.name || 'Unknown'}`);
-  alert('Added to Contacts.');
+async function saveLeadAsCompany(lead) {
+  // Persist a lead as a Company record in Neon (via Netlify Function)
+  // and link the lead row to that company so status updates stay in sync.
+  try {
+    const payload = {
+      name: lead.name || '',
+      status: lead.status || 'unknown',
+      phone: lead.phone || null,
+      website: lead.website || null,
+      address: lead.address || null,
+      lat: typeof lead.lat === 'number' ? lead.lat : null,
+      lng: typeof lead.lng === 'number' ? lead.lng : null,
+      rating: lead.rating ?? null,
+      reviews: lead.user_ratings_total ?? null,
+      external_place_id: lead.id || null,
+    };
+
+    const company = await crmApiFetch(companiesApiUrl(), {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+
+    // Store link so future status changes patch the company
+    lead.company_id = company?.id;
+    saveLeads();
+
+    // Optional activity
+    try {
+      await crmApiFetch(activitiesApiUrl(), {
+        method: 'POST',
+        body: JSON.stringify({
+          entity_type: 'company',
+          entity_id: company?.id,
+          activity_type: 'note',
+          body: `Saved from Lead Map. Keyword: ${lead.keyword || ''}`,
+          outcome: null,
+        }),
+      });
+    } catch (_) {}
+
+    addActivity(`Saved company: ${lead.name || 'Unknown'}`);
+    alert('Saved to Companies.');
+  } catch (err) {
+    console.error(err);
+    alert('Failed to save company. Make sure Neon + Netlify env vars are set.\n\n' + (err?.message || err));
+  }
+}
+
+async function syncCompanyStatusFromLead(lead) {
+  // If this lead has been saved to Companies (Neon), keep the DB status in sync
+  if (!lead || !lead.company_id) return;
+  await crmApiFetch(`${companiesApiUrl()}?id=${encodeURIComponent(String(lead.company_id))}`, {
+    method: 'PATCH',
+    body: JSON.stringify({ status: lead.status || 'unknown' }),
+  });
 }
 
 function exportLeadsCsv() {
