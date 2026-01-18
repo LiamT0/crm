@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ForgeOS — Client Portal</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+  <script type="module" src="script_client.js" defer></script>
+</head>
+<body>
+  <div class="app-container">
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <div class="logo">
+          <span class="logo-icon">⚒️</span>
+          <span class="logo-text">ForgeOS</span>
+        </div>
+        <p class="tagline">Client Portal</p>
+      </div>
+      <nav>
+        <ul>
+          <li class="active" data-page="dashboard">
+            <ion-icon name="grid-outline"></ion-icon>
+            <span>Dashboard</span>
+          </li>
+          <li data-page="projects">
+            <ion-icon name="layers-outline"></ion-icon>
+            <span>Projects</span>
+          </li>
+          <li data-page="webinars">
+            <ion-icon name="videocam-outline"></ion-icon>
+            <span>Webinars</span>
+          </li>
+          <li data-page="billing">
+            <ion-icon name="card-outline"></ion-icon>
+            <span>Billing</span>
+          </li>
+          <li data-page="settings">
+            <ion-icon name="settings-outline"></ion-icon>
+            <span>Settings</span>
+          </li>
+          <li data-page="messages">
+            <ion-icon name="chatbubbles-outline"></ion-icon>
+            <span>Messages</span>
+          </li>
+          <li id="navLogout" class="nav-cta">
+            <ion-icon name="log-out-outline"></ion-icon>
+            <span>Log out</span>
+          </li>
+          <li>
+            <a href="https://forgeos.org" target="_blank" rel="noopener">
+              <ion-icon name="open-outline"></ion-icon>
+              <span>Back to ForgeOS</span>
+            </a>
+          </li>
+        </ul>
+      </nav>
+    </aside>
+
+    <main class="content">
+      <section id="dashboard" class="page visible">
+        <h1 class="page-title">Welcome</h1>
+        <div class="stats-grid">
+          <div class="stat-card">
+            <p class="stat-label">Active projects</p>
+            <p class="stat-value" id="activeProjects">0</p>
+            <p class="stat-sub" id="activeProjectsSub">in progress</p>
+          </div>
+          <div class="stat-card">
+            <p class="stat-label">Next webinar</p>
+            <p class="stat-value" id="nextWebinar">—</p>
+            <p class="stat-sub" id="nextWebinarSub">updates + best practices</p>
+          </div>
+          <div class="stat-card">
+            <p class="stat-label">Latest update</p>
+            <p class="stat-value" id="latestUpdate">—</p>
+            <p class="stat-sub" id="latestUpdateSub">most recent project note</p>
+          </div>
+          <div class="stat-card">
+            <p class="stat-label">Support status</p>
+            <p class="stat-value" id="supportStatus">Open</p>
+            <p class="stat-sub">message ForgeOS any time</p>
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <div class="card">
+            <h2 class="section-title">Upcoming webinars</h2>
+            <div id="webinarList" class="list"></div>
+          </div>
+          <div class="card">
+            <h2 class="section-title">Your projects</h2>
+            <div id="projectPreview" class="list"></div>
+          </div>
+        </div>
+      </section>
+
+      <section id="projects" class="page">
+        <h1 class="page-title">Projects</h1>
+        <div class="card" style="margin-bottom: 16px;">
+          <div class="helper">These are the projects you’ve commissioned with ForgeOS. Status updates appear here as we progress.</div>
+        </div>
+        <div id="projectsGrid" class="project-grid"></div>
+        <div id="projectModal" class="modal hidden">
+          <div class="modal-content">
+            <h2 id="projectModalTitle">Project</h2>
+            <p class="helper" id="projectModalStatus"></p>
+            <div style="margin-top:12px;">
+              <h3 class="section-title">Latest update</h3>
+              <div class="card" id="projectModalUpdate">—</div>
+            </div>
+            <div class="modal-actions">
+              <button class="btn secondary" id="closeProjectModal">Close</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="webinars" class="page">
+        <h1 class="page-title">Webinars</h1>
+        <div class="card">
+          <h2 class="section-title">Upcoming sessions</h2>
+          <div id="webinarsPageList" class="list"></div>
+        </div>
+      </section>
+
+      <section id="billing" class="page">
+        <h1 class="page-title">Billing</h1>
+        <div class="grid-2">
+          <div class="card">
+            <h2 class="section-title">Payment method</h2>
+            <p class="helper">Add or update billing details for fast, frictionless payments.</p>
+            <div style="margin-top: 12px;">
+              <button class="btn primary" id="btnOpenBilling">Set up billing</button>
+            </div>
+            <p class="helper" style="margin-top:10px;">(This will connect to Stripe later. For now it can open a secure link.)</p>
+          </div>
+          <div class="card">
+            <h2 class="section-title">Invoices</h2>
+            <p class="helper">Coming soon — invoice history and downloadable receipts.</p>
+          </div>
+        </div>
+      </section>
+
+      <section id="settings" class="page">
+        <h1 class="page-title">Settings</h1>
+        <div class="card" style="max-width: 720px;">
+          <h2 class="section-title">Profile</h2>
+          <form id="profileForm" class="form-grid">
+            <div class="form-row">
+              <label>Company</label>
+              <input type="text" id="profileCompany" disabled />
+            </div>
+            <div class="form-row">
+              <label>Email</label>
+              <input type="email" id="profileEmail" disabled />
+            </div>
+            <div class="form-row">
+              <label>Billing email</label>
+              <input type="email" id="profileBillingEmail" placeholder="billing@yourcompany.com" />
+            </div>
+            <div class="form-row">
+              <label>Phone</label>
+              <input type="tel" id="profilePhone" placeholder="(555) 123-4567" />
+            </div>
+            <div class="modal-actions" style="justify-content:flex-start;">
+              <button class="btn primary" type="submit">Save</button>
+              <button class="btn secondary" type="button" id="btnResetPassword">Reset password</button>
+            </div>
+          </form>
+        </div>
+      </section>
+
+      <section id="messages" class="page">
+        <h1 class="page-title">Messages</h1>
+        <div class="grid-2">
+          <div class="card">
+            <h2 class="section-title">Send ForgeOS a message</h2>
+            <form id="messageForm" class="form-grid">
+              <div class="form-row">
+                <label>Subject</label>
+                <input type="text" id="msgSubject" placeholder="Quick question about…" required />
+              </div>
+              <div class="form-row">
+                <label>Message</label>
+                <textarea id="msgBody" rows="5" placeholder="Type your message" required></textarea>
+              </div>
+              <button class="btn primary" type="submit">Send</button>
+              <p class="helper">For now this stores messages in your portal and can forward via email later.</p>
+            </form>
+          </div>
+          <div class="card">
+            <h2 class="section-title">Thread</h2>
+            <div id="threadList" class="list"></div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
+  <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
+</body>
+</html>

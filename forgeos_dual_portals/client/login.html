@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ForgeOS — Client Login</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+</head>
+<body>
+  <div class="auth-shell">
+    <div class="auth-card">
+      <div class="auth-brand">
+        <div class="logo">
+          <span class="logo-icon">⚒️</span>
+          <span class="logo-text">ForgeOS</span>
+        </div>
+        <div>
+          <h1>Client Portal Login</h1>
+          <p>Sign in to see your projects, updates, and billing.</p>
+        </div>
+      </div>
+
+      <div class="auth-actions">
+        <button class="btn primary" id="btnLogin">Sign in / Create account</button>
+        <button class="btn secondary" id="btnReset">Reset password</button>
+      </div>
+
+      <div class="auth-help">
+        Need access? <a href="mailto:ljt@forgeos.org">Email ForgeOS</a>
+      </div>
+
+      <div class="auth-divider"></div>
+
+      <div class="auth-help">
+        Internal team? <a href="https://crm.forgeos.org" target="_blank" rel="noopener">Employee CRM</a>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function goHome(){ window.location.href = 'index.html'; }
+
+    if (window.netlifyIdentity) {
+      window.netlifyIdentity.on('init', (user) => {
+        if (user) goHome();
+      });
+      window.netlifyIdentity.init();
+
+      document.getElementById('btnLogin').addEventListener('click', () => {
+        window.netlifyIdentity.open('login');
+      });
+
+      document.getElementById('btnReset').addEventListener('click', () => {
+        window.netlifyIdentity.open('recovery');
+      });
+
+      window.netlifyIdentity.on('login', () => goHome());
+    }
+  </script>
+</body>
+</html>
