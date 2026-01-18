@@ -11,12 +11,15 @@
     />
     <!-- The main stylesheet lives alongside this file -->
     <link rel="stylesheet" href="style.css" />
-    <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+
     <script>
   if (!window.netlifyIdentity || !netlifyIdentity.currentUser()) {
     window.location.href = "/login.html";
   }
 </script>
+    
+    <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+    
     <!-- Chart.js for charts on the dashboard -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <!-- PapaParse for CSV/XLS/Text imports -->
