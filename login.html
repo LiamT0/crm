@@ -1,17 +1,298 @@
-<!DOCTYPE html>
-<html>
+<!doctype html>
+<html lang="en">
 <head>
-  <title>ForgeOS Login</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>ForgeOS • Sign in</title>
+
+  <!-- Netlify Identity Widget -->
   <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+
+  <style>
+    :root{
+      --bg:#0b1220;
+      --panel:#0f1b2f;
+      --panel2:#0c1628;
+      --text:#e8f0ff;
+      --muted:rgba(232,240,255,.70);
+      --border:rgba(232,240,255,.10);
+      --brand1:#38b6c1;
+      --brand2:#52d6c8;
+      --shadow: 0 18px 50px rgba(0,0,0,.35);
+      --radius: 18px;
+    }
+
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+      color:var(--text);
+      background:
+        radial-gradient(900px 520px at 20% 10%, rgba(56,182,193,.22), transparent 60%),
+        radial-gradient(900px 520px at 80% 30%, rgba(82,214,200,.18), transparent 60%),
+        linear-gradient(180deg, #070c16, var(--bg));
+      min-height:100vh;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:24px;
+    }
+
+    .shell{
+      width: min(1040px, 100%);
+      display:grid;
+      grid-template-columns: 1.1fr .9fr;
+      gap:24px;
+    }
+
+    @media (max-width: 860px){
+      .shell{ grid-template-columns: 1fr; }
+    }
+
+    .hero{
+      padding:26px;
+      border:1px solid var(--border);
+      border-radius: var(--radius);
+      background: linear-gradient(180deg, rgba(15,27,47,.70), rgba(12,22,40,.70));
+      box-shadow: var(--shadow);
+      position:relative;
+      overflow:hidden;
+    }
+
+    .hero:before{
+      content:"";
+      position:absolute;
+      inset:-2px;
+      background: linear-gradient(120deg, rgba(56,182,193,.22), rgba(82,214,200,.14), transparent 60%);
+      filter: blur(10px);
+      opacity:.9;
+      pointer-events:none;
+    }
+
+    .brand{
+      position:relative;
+      display:flex;
+      align-items:center;
+      gap:12px;
+      margin-bottom:16px;
+    }
+
+    .mark{
+      width:42px;height:42px;
+      border-radius:14px;
+      background: linear-gradient(135deg, var(--brand1), var(--brand2));
+      box-shadow: 0 10px 22px rgba(56,182,193,.22);
+      display:grid;
+      place-items:center;
+      font-weight:800;
+      letter-spacing:.5px;
+      color:#06101c;
+    }
+
+    .brand h1{
+      margin:0;
+      font-size:18px;
+      font-weight:750;
+      letter-spacing:.3px;
+    }
+
+    .brand p{
+      margin:2px 0 0 0;
+      color:var(--muted);
+      font-size:13px;
+    }
+
+    .headline{
+      position:relative;
+      margin:18px 0 0 0;
+      font-size:34px;
+      line-height:1.05;
+      letter-spacing:-.6px;
+      font-weight:800;
+    }
+
+    .sub{
+      position:relative;
+      margin:12px 0 0 0;
+      color:var(--muted);
+      font-size:14px;
+      line-height:1.55;
+      max-width: 56ch;
+    }
+
+    .bullets{
+      position:relative;
+      margin-top:18px;
+      display:grid;
+      gap:10px;
+    }
+    .bullet{
+      display:flex;
+      gap:10px;
+      align-items:flex-start;
+      padding:12px 12px;
+      border:1px solid var(--border);
+      border-radius: 14px;
+      background: rgba(10,18,32,.35);
+    }
+    .dot{
+      margin-top:3px;
+      width:10px;height:10px;border-radius:50%;
+      background: linear-gradient(135deg, var(--brand1), var(--brand2));
+      box-shadow: 0 6px 14px rgba(56,182,193,.18);
+      flex:0 0 auto;
+    }
+    .bullet b{ font-weight:700; }
+    .bullet span{ color: var(--muted); font-size:13px; line-height:1.45; }
+
+    .card{
+      padding:26px;
+      border:1px solid var(--border);
+      border-radius: var(--radius);
+      background: linear-gradient(180deg, rgba(15,27,47,.92), rgba(12,22,40,.92));
+      box-shadow: var(--shadow);
+      display:flex;
+      flex-direction:column;
+      gap:14px;
+    }
+
+    .card h2{
+      margin:0;
+      font-size:16px;
+      letter-spacing:.2px;
+      font-weight:800;
+    }
+    .card p{
+      margin:0;
+      color:var(--muted);
+      font-size:13px;
+      line-height:1.55;
+    }
+
+    .actions{ display:grid; gap:10px; margin-top:4px; }
+
+    .btn{
+      border:1px solid var(--border);
+      background: rgba(255,255,255,.04);
+      color:var(--text);
+      border-radius: 14px;
+      padding:12px 14px;
+      font-weight:650;
+      cursor:pointer;
+      transition: transform .08s ease, border-color .12s ease, background .12s ease;
+      text-align:left;
+    }
+    .btn:hover{
+      background: rgba(255,255,255,.06);
+      border-color: rgba(56,182,193,.35);
+      transform: translateY(-1px);
+    }
+
+    .btn.primary{
+      border: none;
+      color:#06101c;
+      background: linear-gradient(135deg, var(--brand1), var(--brand2));
+      box-shadow: 0 12px 26px rgba(56,182,193,.18);
+    }
+    .btn.primary:hover{
+      transform: translateY(-1px);
+      filter: brightness(1.02);
+    }
+
+    .tiny{
+      margin-top:10px;
+      font-size:12px;
+      color: var(--muted);
+    }
+    .tiny a{ color: rgba(82,214,200,.92); text-decoration:none; }
+    .tiny a:hover{ text-decoration:underline; }
+
+    /* Netlify identity widget tweaks (best-effort) */
+    .netlify-identity-widget{
+      --primary-color: var(--brand1);
+      --secondary-color: var(--brand2);
+    }
+  </style>
 </head>
 <body>
-  <h1>ForgeOS CRM</h1>
-  <button onclick="netlifyIdentity.open()">Login</button>
+
+  <div class="shell">
+    <section class="hero">
+      <div class="brand">
+        <div class="mark">F</div>
+        <div>
+          <h1>ForgeOS</h1>
+          <p>Operational Intelligence for Construction & Trades</p>
+        </div>
+      </div>
+
+      <div class="headline">Sign in to the CRM & Client Center</div>
+      <div class="sub">
+        Track companies, contacts, projects, and call notes — all tied together like HubSpot,
+        but built for your ForgeOS workflow.
+      </div>
+
+      <div class="bullets">
+        <div class="bullet">
+          <div class="dot"></div>
+          <div><b>One source of truth</b><br/><span>Companies → Contacts → Calls → Notes → Projects</span></div>
+        </div>
+        <div class="bullet">
+          <div class="dot"></div>
+          <div><b>Role-based views</b><br/><span>Admin CRM for ForgeOS • Client portal for customers</span></div>
+        </div>
+        <div class="bullet">
+          <div class="dot"></div>
+          <div><b>Secure access</b><br/><span>Netlify Identity now, full OAuth later if needed</span></div>
+        </div>
+      </div>
+    </section>
+
+    <aside class="card">
+      <h2>Access your workspace</h2>
+      <p>Use your email to sign in. If you were invited, you may need to set your password via the invite or recovery link.</p>
+
+      <div class="actions">
+        <button class="btn primary" id="btnLogin">Sign in</button>
+        <button class="btn" id="btnSignup">Create account (if enabled)</button>
+        <button class="btn" id="btnRecover">Forgot password</button>
+      </div>
+
+      <div class="tiny">
+        Need access? Ask an admin to invite you, or use password recovery if you were already created.
+      </div>
+      <div class="tiny">
+        <a href="/" id="backLink">Back to app</a>
+      </div>
+    </aside>
+  </div>
 
   <script>
+    // Open the widget into specific states
+    const openLogin = () => netlifyIdentity.open("login");
+    const openSignup = () => netlifyIdentity.open("signup");
+    const openRecover = () => netlifyIdentity.open("recovery");
+
+    document.getElementById("btnLogin").addEventListener("click", openLogin);
+    document.getElementById("btnSignup").addEventListener("click", openSignup);
+    document.getElementById("btnRecover").addEventListener("click", openRecover);
+
+    // If already logged in, send them to the app
+    netlifyIdentity.on("init", user => {
+      if (user) window.location.href = "/";
+    });
+
+    // After login, go to app
     netlifyIdentity.on("login", user => {
       window.location.href = "/";
     });
+
+    // Optional: logout handler (if you add a logout button later)
+    netlifyIdentity.on("logout", () => {
+      // stay on login page
+    });
+
+    netlifyIdentity.init();
   </script>
 </body>
 </html>
