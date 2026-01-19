@@ -1,7 +1,0 @@
-{
-  "name": "forgeos-crm",
-  "private": true,
-  "dependencies": {
-    "@neondatabase/serverless": "^0.10.1"
-  }
-}
