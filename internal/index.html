@@ -1,0 +1,692 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ForgeOS CRM</title>
+    <!-- Google fonts for modern, professional typography -->
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <!-- The main stylesheet lives alongside this file -->
+    <link rel="stylesheet" href="style.css" />
+    <!-- Chart.js for charts on the dashboard -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <!-- PapaParse for CSV/XLS/Text imports -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+    <!-- SortableJS for drag‑and‑drop task grouping (project management) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
+    <!-- Leaflet for the Lead Map (Generate Leads) -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <!-- Netlify Identity (Auth) -->
+    <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+  </head>
+  <body>
+    <div id="app">
+      <!-- Sidebar navigation.  Each list item has a data‑page attribute
+           which corresponds to the id of the section it displays. -->
+      <aside class="sidebar">
+        <div class="logo">
+          <!-- ForgeOS mark (anvil + hammer) as inline SVG so it works without any icon libraries -->
+          <svg class="brand-icon" width="22" height="22" viewBox="0 0 24 24" aria-hidden="true">
+            <path fill="currentColor" d="M3 14.5c0-.55.45-1 1-1h5.2c.3-1.1 1.1-2 2.2-2.5l4.1-1.7c.5-.2.8-.7.7-1.2l-.1-.6 1.9-.5.2.7c.3 1.3-.4 2.6-1.6 3.1l-4.1 1.7c-.7.3-1.2 1-1.2 1.8v.2H20c.55 0 1 .45 1 1v2.5c0 1.38-1.12 2.5-2.5 2.5H9.2c-.9 0-1.74-.48-2.18-1.27L6.2 19.5H4.5C3.67 19.5 3 18.83 3 18v-3.5z"/>
+            <path fill="currentColor" d="M7.8 3.6 9.2 2.2l3.5 3.5-1.4 1.4-.5-.5-4.3 4.3-1.4-1.4 4.3-4.3-.6-.6z"/>
+          </svg>
+          <span>ForgeOS</span>
+        </div>
+        <nav>
+          <ul>
+            <li data-page="dashboard" class="active">
+              <ion-icon name="speedometer-outline"></ion-icon>
+              <span>Dashboard</span>
+            </li>
+            <li data-page="contacts">
+              <ion-icon name="people-outline"></ion-icon>
+              <span>Contacts</span>
+            </li>
+            <li data-page="leads">
+              <ion-icon name="map-outline"></ion-icon>
+              <span>Generate Leads</span>
+            </li>
+            <li data-page="deals">
+              <ion-icon name="briefcase-outline"></ion-icon>
+              <span>Deals</span>
+            </li>
+            <li data-page="tasks">
+              <ion-icon name="list-outline"></ion-icon>
+              <span>Tasks</span>
+            </li>
+            <li data-page="assistant">
+              <ion-icon name="sparkles-outline"></ion-icon>
+              <span>AI Assistant</span>
+            </li>
+            <li>
+              <a href="https://client.forgeos.org" target="_blank" rel="noopener">
+                <ion-icon name="open-outline"></ion-icon>
+                <span>Client Portal</span>
+              </a>
+            </li>
+            <li id="navLogout" class="nav-cta">
+              <ion-icon name="log-out-outline"></ion-icon>
+              <span>Log out</span>
+            </li>
+            <!-- External link to your existing GitHub site.  Replace the
+                 href value with your actual GitHub Pages URL. -->
+            <li>
+              <a
+                href="https://liamt0.github.io/constructai-site/"
+                target="_blank"
+                rel="noopener"
+              >
+                <ion-icon name="logo-github"></ion-icon>
+                <span>Company Site</span>
+              </a>
+            </li>
+          </ul>
+        </nav>
+      </aside>
+      <!-- Main content area.  Only one section is visible at a time. -->
+      <main class="content">
+        <!-- Dashboard section -->
+        <section id="dashboard" class="page visible">
+          <h1 class="page-title">Dashboard</h1>
+          <p class="subtitle">Welcome back! Here's your business overview.</p>
+          <div class="stats-grid">
+            <div class="stat-card" id="totalContacts">
+              <div class="stat-icon">
+                <ion-icon name="people"></ion-icon>
+              </div>
+              <div class="stat-info">
+                <span class="stat-label">Total Contacts</span>
+                <span class="stat-value" id="totalContactsValue">0</span>
+                <span class="stat-sub" id="totalCustomersSub">0 customers</span>
+              </div>
+            </div>
+            <div class="stat-card" id="activeDeals">
+              <div class="stat-icon">
+                <ion-icon name="briefcase"></ion-icon>
+              </div>
+              <div class="stat-info">
+                <span class="stat-label">Active Deals</span>
+                <span class="stat-value" id="activeDealsValue">0</span>
+                <span class="stat-sub" id="totalDealsSub">0 total deals</span>
+              </div>
+            </div>
+            <div class="stat-card" id="pipelineValue">
+              <div class="stat-icon">
+                <ion-icon name="cash"></ion-icon>
+              </div>
+              <div class="stat-info">
+                <span class="stat-label">Pipeline Value</span>
+                <span class="stat-value" id="pipelineValueValue">$0</span>
+                <span class="stat-sub" id="wonValueSub">$0 won</span>
+              </div>
+            </div>
+            <div class="stat-card" id="pendingTasks">
+              <div class="stat-icon">
+                <ion-icon name="checkmark-done"></ion-icon>
+              </div>
+              <div class="stat-info">
+                <span class="stat-label">Pending Tasks</span>
+                <span class="stat-value" id="pendingTasksValue">0</span>
+                <span class="stat-sub" id="completedTasksSub">0 completed</span>
+              </div>
+            </div>
+          </div>
+          <div class="dashboard-body">
+            <div class="chart-card">
+              <h2>Pipeline Overview</h2>
+              <canvas id="pipelineChart"></canvas>
+            </div>
+            <div class="activity-card">
+              <h2>Recent Activity</h2>
+              <ul id="recentActivity" class="activity-list"></ul>
+            </div>
+          </div>
+        </section>
+        <!-- Contacts section -->
+        <section id="contacts" class="page">
+          <div class="header-bar">
+            <div>
+              <h1 class="page-title">Contacts</h1>
+              <p class="subtitle" id="contactsCount">0 contacts in your CRM</p>
+            </div>
+            <div class="actions">
+              <button class="btn secondary" id="importContactsButton">
+                <ion-icon name="download-outline"></ion-icon>
+                Import
+              </button>
+              <button class="btn primary" id="addContactButton">
+                <ion-icon name="add"></ion-icon>
+                Add Contact
+              </button>
+            </div>
+          </div>
+          <div class="search-container">
+            <ion-icon name="search-outline"></ion-icon>
+            <input
+              type="text"
+              id="contactSearch"
+              placeholder="Search contacts..."
+            />
+          </div>
+          <div id="contactList" class="card-list"></div>
+        </section>
+        <!-- Deals section -->
+        <!-- Generate Leads (Lead Map) section -->
+        <section id="leads" class="page">
+          <h1 class="page-title">Generate Leads</h1>
+          <p class="subtitle">Search local trades on a map, tag status, and push qualified leads into Contacts.</p>
+
+          <div class="leads-layout">
+            <div class="leads-controls card">
+              <h2>Search</h2>
+              <div class="form-grid">
+                <div class="form-group">
+                  <label for="leadKeyword">Industry / Keyword</label>
+                  <input id="leadKeyword" type="text" placeholder="plumber, HVAC, electrician, construction" value="plumber" />
+                </div>
+                <div class="form-group">
+                  <label for="leadLocation">Location (city, state or ZIP)</label>
+                  <input id="leadLocation" type="text" placeholder="Strongsville, OH or 44136" />
+                </div>
+                <div class="form-group">
+                  <label for="leadRadius">Radius (miles)</label>
+                  <input id="leadRadius" type="number" min="1" max="50" value="10" />
+                </div>
+                <div class="form-group">
+                  <label for="leadLimit">Max results</label>
+                  <input id="leadLimit" type="number" min="5" max="50" value="20" />
+                </div>
+              </div>
+
+              <div class="form-grid">
+                <div class="form-group" style="grid-column: 1 / -1;">
+                  <label for="apiBase">API Base URL (Netlify/Vercel)</label>
+                  <input id="apiBase" type="text" placeholder="https://YOUR-SITE.netlify.app" />
+                  <small class="hint">Set this once (saved locally). This is where your secure Places API function lives.</small>
+                </div>
+              </div>
+
+              <div class="button-row">
+                <button id="btnSaveApi" class="btn secondary">Save API URL</button>
+                <button id="btnSearchLeads" class="btn primary">Search & Add Leads</button>
+              </div>
+
+              <div class="leads-metrics">
+                <div><strong id="leadsCount">0</strong><span>Total leads on map</span></div>
+                <div><strong id="noWebsiteCount">0</strong><span>No website found</span></div>
+                <div><strong id="followUpCount">0</strong><span>Follow-ups</span></div>
+              </div>
+
+              <hr class="divider" />
+
+              <h2>Sales Goal</h2>
+              <div class="form-grid">
+                <div class="form-group">
+                  <label for="salesGoal">Monthly goal ($)</label>
+                  <input id="salesGoal" type="number" min="0" value="10000" />
+                </div>
+                <div class="form-group">
+                  <label for="avgDeal">Avg deal ($)</label>
+                  <input id="avgDeal" type="number" min="0" value="2500" />
+                </div>
+              </div>
+              <p class="hint" id="goalHint">Set a goal to see how many deals you need.</p>
+            </div>
+
+            <div class="leads-map-wrap card">
+              <div id="leadsMap"></div>
+              <div class="map-note">Tip: click a pin to tag status, view phone/website, and add to Contacts.</div>
+            </div>
+          </div>
+
+          <div class="card" style="margin-top: 18px;">
+            <div class="table-header">
+              <h2>Lead List</h2>
+              <div class="table-actions">
+                <select id="leadStatusFilter" class="select">
+                  <option value="all">All statuses</option>
+                  <option value="new">New</option>
+                  <option value="called">Called</option>
+                  <option value="follow_up">Follow Up</option>
+                  <option value="do_not_call">Do Not Call</option>
+                  <option value="won">Won</option>
+                  <option value="lost">Lost</option>
+                </select>
+                <button id="btnExportLeads" class="btn secondary">Export CSV</button>
+                <label class="btn secondary file-btn">
+                  Import CSV
+                  <input id="leadsImport" type="file" accept=".csv" />
+                </label>
+              </div>
+            </div>
+            <div class="table-container">
+              <table class="table" id="leadsTable">
+                <thead>
+                  <tr>
+                    <th>Company</th>
+                    <th>Phone</th>
+                    <th>Website</th>
+                    <th>Rating</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="leadsTbody"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <section id="deals" class="page">
+          <div class="header-bar">
+            <div>
+              <h1 class="page-title">Deals</h1>
+              <p class="subtitle" id="dealsCount">0 deals in your pipeline</p>
+            </div>
+            <div class="actions">
+              <button class="btn primary" id="addDealButton">
+                <ion-icon name="add"></ion-icon>
+                Add Deal
+              </button>
+            </div>
+          </div>
+          <div class="search-container">
+            <ion-icon name="search-outline"></ion-icon>
+            <input
+              type="text"
+              id="dealSearch"
+              placeholder="Search deals..."
+            />
+          </div>
+          <div id="dealList" class="card-list deals"></div>
+        </section>
+        <!-- Tasks / Project management section -->
+        <section id="tasks" class="page">
+          <div class="header-bar">
+            <div>
+              <h1 class="page-title">Tasks & Projects</h1>
+              <p class="subtitle" id="taskSummary">0 pending tasks</p>
+            </div>
+            <div class="actions">
+              <button class="btn primary" id="addTaskButton">
+                <ion-icon name="add"></ion-icon>
+                Add Task
+              </button>
+            </div>
+          </div>
+
+          <!-- Revenue-first auto planner (Motion-style) -->
+          <div class="planner-card">
+            <div class="planner-header">
+              <div>
+                <h2 class="planner-title">Revenue Planner</h2>
+                <p class="planner-subtitle">Paste your projects/tasks — the planner auto-splits and time-blocks for fastest revenue.</p>
+              </div>
+              <div class="planner-actions">
+                <button class="btn secondary" id="btnReplan">Replan</button>
+                <button class="btn primary" id="btnGeneratePlan">Generate Plan</button>
+                <button class="btn primary" id="btnGenerateWeek" title="Build a full week plan">Generate Week</button>
+              </div>
+            </div>
+
+            <div class="planner-body">
+              <div class="planner-left">
+                <div class="form-group">
+                  <label for="aiIntake">AI Intake / Brain Dump</label>
+                  <textarea id="aiIntake" rows="5" placeholder="Example: Close 2 deals this week, follow up with HVAC lead, build lead gen MVP, onboard Wayne Hose..."></textarea>
+                  <small class="helper">Tip: include deal names, deadlines, and dollar amounts when you can.</small>
+                </div>
+              </div>
+              <div class="planner-right">
+                <div class="form-row">
+                  <div class="form-group">
+                    <label for="workdayStart">Workday start</label>
+                    <input id="workdayStart" type="time" value="09:00" />
+                  </div>
+                  <div class="form-group">
+                    <label for="workdayEnd">Workday end</label>
+                    <input id="workdayEnd" type="time" value="17:00" />
+                  </div>
+                </div>
+                <div class="form-row">
+                  <div class="form-group">
+                    <label for="primeHours">Prime hours (money)</label>
+                    <input id="primeHours" type="text" value="09:00-15:00" />
+                  </div>
+                  <div class="form-group">
+                    <label for="downtimeHours">Downtime (systems)</label>
+                    <input id="downtimeHours" type="text" value="19:00-22:00" />
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label for="meetingBlocks">Unavailable blocks (optional)</label>
+                  <input id="meetingBlocks" type="text" placeholder="12:00-12:30, 14:00-14:30" />
+                </div>
+              </div>
+            </div>
+
+            <div class="planner-grid">
+              <div class="planner-box">
+                <div class="planner-box-title">🔥 Do this now</div>
+                <div id="doNowCard" class="planner-box-body muted">Generate a plan to get your next action.</div>
+              </div>
+              <div class="planner-box">
+                <div class="planner-box-title">⏭ Next up</div>
+                <div id="nextUpList" class="planner-box-body muted">—</div>
+              </div>
+              <div class="planner-box">
+                <div class="planner-box-title">🌙 Tonight (systems)</div>
+                <div id="tonightList" class="planner-box-body muted">—</div>
+              </div>
+            </div>
+
+            <div class="planner-timeline">
+              <div class="planner-box-title">Today plan</div>
+              <div id="planTimeline" class="muted">—</div>
+            </div>
+          </div>
+
+          <div id="interruptToast" class="toast hidden"></div>
+
+          <!-- Project overview cards -->
+          <div id="projectList" class="project-grid"></div>
+          <!-- Filter tabs for tasks -->
+          <div class="filter-tabs">
+            <button class="filter-tab active" data-filter="all">All</button>
+            <button class="filter-tab" data-filter="pending">Pending</button>
+            <button class="filter-tab" data-filter="completed">Completed</button>
+          </div>
+          <!-- Search tasks -->
+          <div class="search-container">
+            <ion-icon name="search-outline"></ion-icon>
+            <input
+              type="text"
+              id="taskSearch"
+              placeholder="Search tasks..."
+            />
+          </div>
+          <div id="taskList" class="task-list"></div>
+        </section>
+        <!-- AI Assistant section -->
+        <section id="assistant" class="page">
+          <div class="assistant-layout">
+            <div class="assistant-header">
+              <h1 class="page-title">CRM Assistant</h1>
+              <p class="subtitle">
+                I can help you manage contacts, deals, and tasks. Ask me
+                anything about your CRM data!
+              </p>
+              <div class="suggestions">
+                <button class="suggestion" data-suggest="show leads">
+                  Show me all my leads
+                </button>
+                <button class="suggestion" data-suggest="create contact">
+                  Create a new contact for John Smith
+                </button>
+                <button class="suggestion" data-suggest="deals negotiation">
+                  What deals are in negotiation?
+                </button>
+                <button class="suggestion" data-suggest="add task">
+                  Add a task to follow up with clients
+                </button>
+              </div>
+            </div>
+            <div class="chat-container">
+              <ul id="chatHistory" class="chat-history"></ul>
+              <div class="chat-input">
+                <input
+                  type="text"
+                  id="chatMessage"
+                  placeholder="Ask me anything about your CRM..."
+                />
+                <button class="btn primary" id="sendChatButton">
+                  <ion-icon name="send"></ion-icon>
+                </button>
+              </div>
+            </div>
+          </div>
+        </section>
+      </main>
+      <!-- Hidden file input for imports -->
+      <input
+        type="file"
+        id="fileInput"
+        accept=".csv,.xls,.xlsx,.txt"
+        style="display: none"
+      />
+    </div>
+    <!-- Modal overlays for create/edit forms.  They are hidden by default and
+         toggled visible from script.js -->
+    <!-- Contact modal -->
+    <div id="contactModal" class="modal-overlay hidden">
+      <div class="modal">
+        <h2 id="contactModalTitle">New Contact</h2>
+        <form id="contactForm">
+          <div class="form-group">
+            <label for="contactName">Name *</label>
+            <input type="text" id="contactName" required />
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="contactEmail">Email</label>
+              <input type="email" id="contactEmail" />
+            </div>
+            <div class="form-group">
+              <label for="contactPhone">Phone</label>
+              <input type="tel" id="contactPhone" />
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="contactCompany">Company</label>
+              <input type="text" id="contactCompany" />
+            </div>
+            <div class="form-group">
+              <label for="contactPosition">Position</label>
+              <input type="text" id="contactPosition" />
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="contactStatus">Status</label>
+              <select id="contactStatus">
+                <option value="Lead">Lead</option>
+                <option value="Prospect">Prospect</option>
+                <option value="Customer">Customer</option>
+                <option value="Inactive">Inactive</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="contactSource">Source</label>
+              <select id="contactSource">
+                <option value="None">None</option>
+                <option value="Website">Website</option>
+                <option value="Referral">Referral</option>
+                <option value="Cold Outreach">Cold Outreach</option>
+                <option value="Event">Event</option>
+                <option value="Social Media">Social Media</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="contactNotes">Notes</label>
+            <textarea id="contactNotes" rows="3"></textarea>
+          </div>
+          <div class="modal-actions">
+            <button type="button" class="btn secondary" id="cancelContact">
+              Cancel
+            </button>
+            <button type="submit" class="btn primary" id="saveContact">
+              Save
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+    <!-- Deal modal -->
+    <div id="dealModal" class="modal-overlay hidden">
+      <div class="modal">
+        <h2 id="dealModalTitle">New Deal</h2>
+        <form id="dealForm">
+          <div class="form-group">
+            <label for="dealTitle">Deal Title *</label>
+            <input type="text" id="dealTitle" required />
+          </div>
+          <div class="form-group">
+            <label for="dealContact">Contact</label>
+            <select id="dealContact">
+              <option value="">No contact</option>
+            </select>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="dealValue">Value ($)</label>
+              <input type="number" id="dealValue" min="0" step="0.01" />
+            </div>
+            <div class="form-group">
+              <label for="dealProbability">Probability (%)</label>
+              <input
+                type="number"
+                id="dealProbability"
+                min="0"
+                max="100"
+              />
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="dealStage">Stage</label>
+              <select id="dealStage">
+                <option value="Discovery">Discovery</option>
+                <option value="Proposal">Proposal</option>
+                <option value="Negotiation">Negotiation</option>
+                <option value="Closed Won">Closed Won</option>
+                <option value="Closed Lost">Closed Lost</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="dealCloseDate">Expected Close</label>
+              <input type="date" id="dealCloseDate" />
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="dealNotes">Notes</label>
+            <textarea id="dealNotes" rows="3"></textarea>
+          </div>
+          <div class="modal-actions">
+            <button type="button" class="btn secondary" id="cancelDeal">
+              Cancel
+            </button>
+            <button type="submit" class="btn primary" id="saveDeal">
+              Save
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+    <!-- Task modal -->
+    <div id="taskModal" class="modal-overlay hidden">
+      <div class="modal">
+        <h2 id="taskModalTitle">New Task</h2>
+        <form id="taskForm">
+          <div class="form-group">
+            <label for="taskTitle">Task Title *</label>
+            <input type="text" id="taskTitle" required />
+          </div>
+          <div class="form-group">
+            <label for="taskDescription">Description</label>
+            <textarea id="taskDescription" rows="3"></textarea>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="taskProject">Project</label>
+              <input type="text" id="taskProject" />
+            </div>
+            <div class="form-group">
+              <label for="taskPriority">Priority</label>
+              <select id="taskPriority">
+                <option value="low">Low</option>
+                <option value="medium">Medium</option>
+                <option value="high">High</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="taskDueDate">Due Date</label>
+              <input type="date" id="taskDueDate" />
+            </div>
+            <div class="form-group">
+              <label for="taskStatus">Status</label>
+              <select id="taskStatus">
+                <option value="Not Started">Not Started</option>
+                <option value="In Progress">In Progress</option>
+                <option value="Blocked">Blocked</option>
+                <option value="Completed">Completed</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="taskEstimate">Estimate (minutes)</label>
+              <input type="number" id="taskEstimate" min="5" step="5" value="30" />
+            </div>
+            <div class="form-group">
+              <label for="taskEnergy">Energy</label>
+              <select id="taskEnergy">
+                <option value="Deep">Deep</option>
+                <option value="Admin">Admin</option>
+                <option value="Calls">Calls</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="taskType">Type</label>
+              <select id="taskType">
+                <option value="Revenue">Revenue</option>
+                <option value="Delivery">Delivery</option>
+                <option value="System">System</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="taskDeal">Deal (optional)</label>
+              <input type="text" id="taskDeal" placeholder="Deal name or id" />
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="taskImpact">Impact (1–5)</label>
+              <input type="number" id="taskImpact" min="1" max="5" value="3" />
+            </div>
+            <div class="form-group">
+              <label for="taskUrgency">Urgency (1–5)</label>
+              <input type="number" id="taskUrgency" min="1" max="5" value="3" />
+            </div>
+          </div>
+          <div class="modal-actions">
+            <button type="button" class="btn secondary" id="cancelTask">
+              Cancel
+            </button>
+            <button type="submit" class="btn primary" id="saveTask">
+              Save
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+    <!-- Ionicons icons library.  Use the non‑module version only to avoid
+         cross‑origin issues when running locally.  -->
+    <script src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
+    <!-- Main application logic -->
+    <script type="module" src="script.js"></script>
+  </body>
+</html>
