@@ -54,20 +54,34 @@
       });
       window.netlifyIdentity.init();
 
-      document.getElementById('btnLogin').addEventListener('click', () => {
-        window.netlifyIdentity.open('login');
-      });
-
-      document.getElementById('btnReset').addEventListener('click', () => {
-        window.netlifyIdentity.open('login');
-        setTimeout(() => {
-          const forgot = document.querySelector('.netlify-identity-widget .forgot-pass');
-          if (forgot) forgot.click();
-        }, 300);
-      });
-
       window.netlifyIdentity.on('login', () => goHome());
     }
+
+    // Attach button handlers after DOM is ready - outside init callback to avoid race conditions
+    document.addEventListener('DOMContentLoaded', () => {
+      const loginBtn = document.getElementById('btnLogin');
+      const resetBtn = document.getElementById('btnReset');
+
+      if (loginBtn) {
+        loginBtn.addEventListener('click', () => {
+          if (window.netlifyIdentity) {
+            window.netlifyIdentity.open('login');
+          }
+        });
+      }
+
+      if (resetBtn) {
+        resetBtn.addEventListener('click', () => {
+          if (window.netlifyIdentity) {
+            window.netlifyIdentity.open('login');
+            setTimeout(() => {
+              const forgot = document.querySelector('.netlify-identity-widget .forgot-pass');
+              if (forgot) forgot.click();
+            }, 300);
+          }
+        });
+      }
+    });
   </script>
 </body>
 </html>
