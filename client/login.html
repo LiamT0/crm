@@ -1,73 +1,527 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>ForgeOS — Client Login</title>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="style.css" />
-  <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>ForgeOS | Client Portal</title>
+
+  <style>
+    :root{
+      --bg0:#060b10;
+      --bg1:#0b121a;
+      --card:#0e1a23cc;
+      --card2:#0e1a2399;
+      --stroke:#1c2c3a;
+      --text:#e8f1f7;
+      --muted:#a7b5c3;
+      --teal:#3fc7c7;
+      --teal2:#7ee7e7;
+      --shadow: 0 20px 60px rgba(0,0,0,.55);
+      --radius: 28px;
+    }
+
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+      color:var(--text);
+      min-height:100vh;
+      display:grid;
+      place-items:center;
+      background:
+        radial-gradient(1200px 700px at 50% 30%, rgba(63,199,199,.18), transparent 60%),
+        radial-gradient(900px 550px at 20% 10%, rgba(126,231,231,.10), transparent 55%),
+        linear-gradient(180deg, #05080c, #070b10 30%, #04070b);
+    }
+
+    .wrap{
+      width:min(520px, 92vw);
+      padding: 26px 16px;
+    }
+
+    .card{
+      position:relative;
+      background: linear-gradient(180deg, var(--card), rgba(8,14,20,.72));
+      border:1px solid rgba(28,44,58,.85);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+      padding: 34px 34px 26px;
+      backdrop-filter: blur(12px);
+    }
+
+    /* top glow */
+    .card::before{
+      content:"";
+      position:absolute;
+      top:-120px; left:50%;
+      transform:translateX(-50%);
+      width:520px; height:260px;
+      background: radial-gradient(circle at center, rgba(63,199,199,.26), transparent 60%);
+      filter: blur(6px);
+      pointer-events:none;
+    }
+
+    .brand{
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      gap:14px;
+      margin-bottom:18px;
+    }
+    .logo{
+      width:54px; height:54px;
+      border-radius:14px;
+      background: linear-gradient(180deg, rgba(63,199,199,.95), rgba(63,199,199,.65));
+      box-shadow: 0 12px 30px rgba(63,199,199,.18);
+      display:grid;
+      place-items:center;
+      border:1px solid rgba(255,255,255,.12);
+    }
+    .logo svg{opacity:.95}
+    .brand-name{
+      font-weight: 800;
+      letter-spacing:.2px;
+      font-size: 34px;
+      color: var(--teal2);
+      text-shadow: 0 6px 18px rgba(63,199,199,.14);
+    }
+
+    h1{
+      margin: 18px 0 10px;
+      font-size: 40px;
+      line-height:1.08;
+      text-align:center;
+      letter-spacing:-.4px;
+    }
+    .sub{
+      margin:0 auto 22px;
+      text-align:center;
+      color: var(--muted);
+      max-width: 420px;
+      font-size: 18px;
+      line-height:1.45;
+    }
+
+    .tiles{
+      display:grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+      margin: 18px 0 22px;
+    }
+    .tile{
+      background: linear-gradient(180deg, rgba(18,34,46,.82), rgba(12,24,33,.72));
+      border: 1px solid rgba(28,44,58,.9);
+      border-radius: 16px;
+      padding: 16px 12px;
+      text-align:center;
+      box-shadow: 0 14px 40px rgba(0,0,0,.35);
+    }
+    .tile svg{
+      width:22px; height:22px;
+      color: var(--teal);
+      margin-bottom: 10px;
+      opacity:.95;
+    }
+    .tile span{
+      display:block;
+      color:#cfe1ef;
+      font-weight:650;
+      font-size: 15px;
+    }
+
+    .cta{
+      margin-top: 10px;
+      display:grid;
+      gap: 12px;
+    }
+
+    .btn{
+      width:100%;
+      border-radius: 18px;
+      padding: 16px 16px;
+      font-size: 20px;
+      font-weight: 800;
+      border: 1px solid rgba(255,255,255,.10);
+      cursor:pointer;
+      transition: transform .06s ease, filter .2s ease, box-shadow .2s ease;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      gap:12px;
+      user-select:none;
+    }
+    .btn:active{ transform: translateY(1px); }
+
+    .btn-primary{
+      background: linear-gradient(180deg, rgba(63,199,199,1), rgba(63,199,199,.78));
+      color:#052127;
+      box-shadow: 0 18px 45px rgba(63,199,199,.20);
+    }
+    .btn-primary:hover{ filter: brightness(1.03); }
+
+    .btn-ghost{
+      background: linear-gradient(180deg, rgba(8,14,20,.2), rgba(8,14,20,.10));
+      border: 1px solid rgba(28,44,58,.95);
+      color: #d9e6f2;
+    }
+    .btn-ghost:hover{ box-shadow: 0 18px 45px rgba(0,0,0,.34); }
+
+    .hr{
+      display:flex;
+      align-items:center;
+      gap: 14px;
+      margin: 18px 0 14px;
+      color: rgba(167,181,195,.85);
+    }
+    .hr::before,.hr::after{
+      content:"";
+      height:1px;
+      flex:1;
+      background: rgba(28,44,58,.9);
+    }
+
+    .footer-links{
+      display:flex;
+      justify-content:space-between;
+      gap: 16px;
+      margin-top: 6px;
+      font-weight: 650;
+    }
+    .link{
+      display:flex;
+      align-items:center;
+      gap: 10px;
+      color: #a9c0d4;
+      text-decoration:none;
+      padding: 10px 10px;
+      border-radius: 14px;
+      transition: background .2s ease, color .2s ease;
+    }
+    .link:hover{
+      background: rgba(28,44,58,.35);
+      color: #d9eef0;
+    }
+    .link svg{ width:18px; height:18px; color: var(--teal); opacity:.95; }
+
+    /* Modal */
+    dialog{
+      border:none;
+      padding:0;
+      background: transparent;
+    }
+    dialog::backdrop{
+      background: rgba(0,0,0,.55);
+      backdrop-filter: blur(6px);
+    }
+    .modal{
+      width: min(520px, 92vw);
+      background: linear-gradient(180deg, rgba(14,26,35,.95), rgba(8,14,20,.92));
+      border: 1px solid rgba(28,44,58,.95);
+      border-radius: 22px;
+      box-shadow: var(--shadow);
+      padding: 18px 18px 16px;
+      color: var(--text);
+    }
+    .modal-head{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      padding: 6px 6px 10px;
+    }
+    .modal-title{
+      font-weight: 850;
+      letter-spacing:-.2px;
+      font-size: 18px;
+      color: #dff3f3;
+    }
+    .x{
+      border:none;
+      background: rgba(28,44,58,.35);
+      color:#dff3f3;
+      width:36px;height:36px;
+      border-radius: 12px;
+      cursor:pointer;
+    }
+    .form{
+      display:grid;
+      gap: 10px;
+      padding: 6px;
+    }
+    .row{
+      display:grid;
+      gap: 6px;
+    }
+    label{
+      font-size: 13px;
+      color: rgba(167,181,195,.9);
+      font-weight: 650;
+    }
+    input{
+      width:100%;
+      padding: 14px 14px;
+      border-radius: 14px;
+      border: 1px solid rgba(28,44,58,.95);
+      background: rgba(8,14,20,.55);
+      color: var(--text);
+      outline:none;
+    }
+    input:focus{
+      border-color: rgba(63,199,199,.65);
+      box-shadow: 0 0 0 3px rgba(63,199,199,.15);
+    }
+    .modal-actions{
+      display:grid;
+      gap: 10px;
+      padding: 6px;
+      margin-top: 4px;
+    }
+    .small{
+      font-size: 13px;
+      color: rgba(167,181,195,.85);
+      text-align:center;
+      margin-top: 6px;
+    }
+    .toggle{
+      display:flex;
+      justify-content:center;
+      gap: 8px;
+      margin-top: 4px;
+      flex-wrap:wrap;
+    }
+    .toggle button{
+      background: rgba(28,44,58,.30);
+      border: 1px solid rgba(28,44,58,.85);
+      color:#cfe1ef;
+      padding: 8px 10px;
+      border-radius: 12px;
+      cursor:pointer;
+      font-weight: 700;
+      font-size: 13px;
+    }
+    .toggle button.active{
+      border-color: rgba(63,199,199,.65);
+      color:#dff3f3;
+      background: rgba(63,199,199,.10);
+    }
+
+    .msg{
+      display:none;
+      margin: 0 6px;
+      padding: 10px 12px;
+      border-radius: 14px;
+      border: 1px solid rgba(28,44,58,.85);
+      background: rgba(8,14,20,.45);
+      color: #d9e6f2;
+      font-size: 14px;
+    }
+    .msg.show{ display:block; }
+    .msg.err{ border-color: rgba(255,80,80,.35); }
+    .msg.ok{ border-color: rgba(63,199,199,.45); }
+
+    @media (max-width: 420px){
+      h1{font-size: 34px;}
+      .brand-name{font-size: 28px;}
+      .tiles{grid-template-columns:1fr; }
+    }
+  </style>
 </head>
+
 <body>
-  <div class="auth-shell">
-    <div class="auth-card">
-      <div class="auth-brand">
-        <div class="logo">
-          <span class="logo-icon">⚒️</span>
-          <span class="logo-text">ForgeOS</span>
+  <div class="wrap">
+    <div class="card">
+      <div class="brand">
+        <div class="logo" aria-hidden="true">
+          <!-- simple tool icon -->
+          <svg viewBox="0 0 24 24" fill="none">
+            <path d="M14 7l3-3 3 3-3 3" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M11 10l-7 7a2 2 0 0 0 0 3 2 2 0 0 0 3 0l7-7" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M8 13l3 3" stroke="white" stroke-width="2" stroke-linecap="round"/>
+          </svg>
         </div>
-        <div>
-          <h1>Client Portal Login</h1>
-          <p>Sign in to see your projects, updates, and billing.</p>
+        <div class="brand-name">ForgeOS</div>
+      </div>
+
+      <h1>Welcome to Client Portal</h1>
+      <p class="sub">Access your projects, track progress, and manage billing all in one place.</p>
+
+      <div class="tiles">
+        <div class="tile">
+          <svg viewBox="0 0 24 24" fill="none">
+            <path d="M3 7h18v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z" stroke="currentColor" stroke-width="2"/>
+            <path d="M3 7l2-3h14l2 3" stroke="currentColor" stroke-width="2"/>
+          </svg>
+          <span>Project Updates</span>
+        </div>
+
+        <div class="tile">
+          <svg viewBox="0 0 24 24" fill="none">
+            <path d="M15 10l4.5-2.5v10L15 15v-5z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+            <path d="M4 6h11v12H4z" stroke="currentColor" stroke-width="2"/>
+          </svg>
+          <span>Webinars</span>
+        </div>
+
+        <div class="tile">
+          <svg viewBox="0 0 24 24" fill="none">
+            <path d="M4 7h16v10H4z" stroke="currentColor" stroke-width="2"/>
+            <path d="M7 15h2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            <path d="M7 9h10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+          <span>Billing</span>
         </div>
       </div>
 
-      <div class="auth-actions">
-        <button class="btn primary" id="btnLogin">Sign in / Create account</button>
-        <button class="btn secondary" id="btnReset">Reset password</button>
+      <div class="cta">
+        <button class="btn btn-primary" id="openAuth">
+          <!-- arrow icon -->
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none">
+            <path d="M10 17l5-5-5-5" stroke="#052127" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M4 12h11" stroke="#052127" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+          Sign in / Create account
+        </button>
+
+        <button class="btn btn-ghost" id="resetBtn">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none">
+            <path d="M3 12a9 9 0 1 0 3-6.7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            <path d="M3 4v6h6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+          Reset password
+        </button>
       </div>
 
-      <div class="auth-help">
-        Need access? <a href="mailto:ljt@forgeos.org">Email ForgeOS</a>
-      </div>
+      <div class="hr">Need help?</div>
 
-      <div class="auth-divider"></div>
+      <div class="footer-links">
+        <a class="link" href="mailto:support@forgeos.org" id="supportLink">
+          <svg viewBox="0 0 24 24" fill="none">
+            <path d="M4 6h16v12H4z" stroke="currentColor" stroke-width="2"/>
+            <path d="M4 7l8 6 8-6" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+          </svg>
+          Contact Support
+        </a>
 
-      <div class="auth-help">
-        Internal team? <a href="https://crm.forgeos.org" target="_blank" rel="noopener">Employee CRM</a>
+        <!-- Adjust this URL to your employee portal path -->
+        <a class="link" href="/internal/" id="employeeLink">
+          <svg viewBox="0 0 24 24" fill="none">
+            <path d="M4 4h16v16H4z" stroke="currentColor" stroke-width="2"/>
+            <path d="M8 20V8h8v12" stroke="currentColor" stroke-width="2"/>
+          </svg>
+          Employee CRM
+        </a>
       </div>
     </div>
   </div>
 
+  <!-- Auth Modal -->
+  <dialog id="authModal">
+    <div class="modal">
+      <div class="modal-head">
+        <div class="modal-title" id="modalTitle">Sign in</div>
+        <button class="x" id="closeModal" aria-label="Close">✕</button>
+      </div>
+
+      <div class="toggle">
+        <button id="modeSignIn" class="active" type="button">Sign in</button>
+        <button id="modeCreate" type="button">Create account</button>
+      </div>
+
+      <div class="msg" id="msgBox"></div>
+
+      <form class="form" id="authForm">
+        <div class="row">
+          <label for="email">Email</label>
+          <input id="email" name="email" type="email" autocomplete="email" required />
+        </div>
+
+        <div class="row">
+          <label for="password">Password</label>
+          <input id="password" name="password" type="password" autocomplete="current-password" required />
+        </div>
+
+        <div class="modal-actions">
+          <button class="btn btn-primary" type="submit" id="submitAuth">
+            Continue
+          </button>
+          <div class="small">By continuing, you agree to keep client data confidential.</div>
+        </div>
+      </form>
+    </div>
+  </dialog>
+
   <script>
-    function goHome(){ window.location.href = 'index.html'; }
+    // ====== UI wiring (no backend assumptions yet) ======
+    const modal = document.getElementById("authModal");
+    const openAuth = document.getElementById("openAuth");
+    const closeModal = document.getElementById("closeModal");
+    const authForm = document.getElementById("authForm");
+    const modeSignIn = document.getElementById("modeSignIn");
+    const modeCreate = document.getElementById("modeCreate");
+    const modalTitle = document.getElementById("modalTitle");
+    const msgBox = document.getElementById("msgBox");
+    const resetBtn = document.getElementById("resetBtn");
 
-    if (window.netlifyIdentity) {
-      window.netlifyIdentity.on('init', (user) => {
-        const hash = window.location.hash || '';
-        const hasToken = /invite_token=|recovery_token=|confirmation_token=/i.test(hash);
-        if (hasToken) {
-          window.netlifyIdentity.open();
-          return;
-        }
-        if (user) goHome();
-      });
-      window.netlifyIdentity.init();
+    let mode = "signin"; // or "create"
 
-      document.getElementById('btnLogin').addEventListener('click', () => {
-        window.netlifyIdentity.open('login');
-      });
-
-      document.getElementById('btnReset').addEventListener('click', () => {
-        window.netlifyIdentity.open('login');
-        setTimeout(() => {
-          const forgot = document.querySelector('.netlify-identity-widget .forgot-pass');
-          if (forgot) forgot.click();
-        }, 300);
-      });
-
-      window.netlifyIdentity.on('login', () => goHome());
+    function setMode(nextMode){
+      mode = nextMode;
+      modeSignIn.classList.toggle("active", mode === "signin");
+      modeCreate.classList.toggle("active", mode === "create");
+      modalTitle.textContent = mode === "signin" ? "Sign in" : "Create account";
+      showMsg("", "");
     }
+
+    function showMsg(text, type){
+      msgBox.classList.remove("show", "err", "ok");
+      if(!text) return;
+      msgBox.textContent = text;
+      msgBox.classList.add("show");
+      if(type === "err") msgBox.classList.add("err");
+      if(type === "ok") msgBox.classList.add("ok");
+    }
+
+    openAuth.addEventListener("click", () => {
+      modal.showModal();
+      setMode("signin");
+      document.getElementById("email").focus();
+    });
+    closeModal.addEventListener("click", () => modal.close());
+
+    modeSignIn.addEventListener("click", () => setMode("signin"));
+    modeCreate.addEventListener("click", () => setMode("create"));
+
+    resetBtn.addEventListener("click", () => {
+      // Hook this to your reset function later (/.netlify/functions/reset_password)
+      showMsg("Password reset will be enabled shortly. Contact support if urgent.", "ok");
+      modal.showModal();
+    });
+
+    authForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      const email = document.getElementById("email").value.trim();
+      const password = document.getElementById("password").value;
+
+      // TODO: wire to your Netlify Functions:
+      // - Sign in -> POST /.netlify/functions/login
+      // - Create -> POST /.netlify/functions/signup
+      // Both should return { token } then redirect
+
+      // Temporary behavior so UI feels real while we wire backend:
+      if (!email || !password) return;
+
+      // placeholder: accept anything that looks like email for now
+      localStorage.setItem("forgeos_token", "dev-token");
+      localStorage.setItem("forgeos_email", email);
+
+      showMsg(mode === "signin" ? "Signed in. Redirecting..." : "Account created. Redirecting...", "ok");
+
+      setTimeout(() => {
+        // Change this to your actual portal page when ready
+        window.location.href = "/index.html";
+      }, 700);
+    });
   </script>
 </body>
 </html>
