@@ -4,37 +4,75 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>ForgeOS — Client Login</title>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="style.css" />
+  <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
+  <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
   <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
 </head>
 <body>
   <div class="auth-shell">
-    <div class="auth-card">
-      <div class="auth-brand">
-        <div class="logo">
-          <span class="logo-icon">⚒️</span>
-          <span class="logo-text">ForgeOS</span>
+    <div class="auth-card auth-card-enhanced">
+      <!-- Decorative glow effect -->
+      <div class="auth-glow"></div>
+
+      <!-- Logo and branding -->
+      <div class="auth-logo-section">
+        <div class="auth-logo-icon">
+          <ion-icon name="construct-outline"></ion-icon>
         </div>
-        <div>
-          <h1>Client Portal Login</h1>
-          <p>Sign in to see your projects, updates, and billing.</p>
+        <span class="auth-logo-text">ForgeOS</span>
+      </div>
+
+      <!-- Welcome heading -->
+      <div class="auth-welcome">
+        <h1>Welcome to Client Portal</h1>
+        <p>Access your projects, track progress, and manage billing all in one place.</p>
+      </div>
+
+      <!-- Feature highlights -->
+      <div class="auth-features">
+        <div class="auth-feature">
+          <ion-icon name="folder-open-outline"></ion-icon>
+          <span>Project Updates</span>
+        </div>
+        <div class="auth-feature">
+          <ion-icon name="videocam-outline"></ion-icon>
+          <span>Webinars</span>
+        </div>
+        <div class="auth-feature">
+          <ion-icon name="card-outline"></ion-icon>
+          <span>Billing</span>
         </div>
       </div>
 
-      <div class="auth-actions">
-        <button class="btn primary" id="btnLogin">Sign in / Create account</button>
-        <button class="btn secondary" id="btnReset">Reset password</button>
+      <!-- Action buttons -->
+      <div class="auth-actions-enhanced">
+        <button class="btn-auth-primary" id="btnLogin">
+          <ion-icon name="log-in-outline"></ion-icon>
+          <span>Sign in / Create account</span>
+        </button>
+        <button class="btn-auth-secondary" id="btnReset">
+          <ion-icon name="key-outline"></ion-icon>
+          <span>Reset password</span>
+        </button>
       </div>
 
-      <div class="auth-help">
-        Need access? <a href="mailto:ljt@forgeos.org">Email ForgeOS</a>
+      <!-- Divider -->
+      <div class="auth-divider-line">
+        <span>Need help?</span>
       </div>
 
-      <div class="auth-divider"></div>
-
-      <div class="auth-help">
-        Internal team? <a href="https://crm.forgeos.org" target="_blank" rel="noopener">Employee CRM</a>
+      <!-- Help links -->
+      <div class="auth-help-links">
+        <a href="mailto:ljt@forgeos.org" class="auth-help-link">
+          <ion-icon name="mail-outline"></ion-icon>
+          <span>Contact Support</span>
+        </a>
+        <a href="https://crm.forgeos.org" target="_blank" rel="noopener" class="auth-help-link">
+          <ion-icon name="business-outline"></ion-icon>
+          <span>Employee CRM</span>
+        </a>
       </div>
     </div>
   </div>
