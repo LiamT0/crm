@@ -50,7 +50,6 @@
       backdrop-filter: blur(12px);
     }
 
-    /* top glow */
     .card::before{
       content:"";
       position:absolute;
@@ -204,16 +203,8 @@
     }
     .link svg{ width:18px; height:18px; color: var(--teal); opacity:.95; }
 
-    /* Modal */
-    dialog{
-      border:none;
-      padding:0;
-      background: transparent;
-    }
-    dialog::backdrop{
-      background: rgba(0,0,0,.55);
-      backdrop-filter: blur(6px);
-    }
+    dialog{ border:none; padding:0; background: transparent; }
+    dialog::backdrop{ background: rgba(0,0,0,.55); backdrop-filter: blur(6px); }
     .modal{
       width: min(520px, 92vw);
       background: linear-gradient(180deg, rgba(14,26,35,.95), rgba(8,14,20,.92));
@@ -243,15 +234,8 @@
       border-radius: 12px;
       cursor:pointer;
     }
-    .form{
-      display:grid;
-      gap: 10px;
-      padding: 6px;
-    }
-    .row{
-      display:grid;
-      gap: 6px;
-    }
+    .form{ display:grid; gap: 10px; padding: 6px; }
+    .row{ display:grid; gap: 6px; }
     label{
       font-size: 13px;
       color: rgba(167,181,195,.9);
@@ -270,12 +254,7 @@
       border-color: rgba(63,199,199,.65);
       box-shadow: 0 0 0 3px rgba(63,199,199,.15);
     }
-    .modal-actions{
-      display:grid;
-      gap: 10px;
-      padding: 6px;
-      margin-top: 4px;
-    }
+    .modal-actions{ display:grid; gap: 10px; padding: 6px; margin-top: 4px; }
     .small{
       font-size: 13px;
       color: rgba(167,181,195,.85);
@@ -332,7 +311,6 @@
     <div class="card">
       <div class="brand">
         <div class="logo" aria-hidden="true">
-          <!-- simple tool icon -->
           <svg viewBox="0 0 24 24" fill="none">
             <path d="M14 7l3-3 3 3-3 3" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
             <path d="M11 10l-7 7a2 2 0 0 0 0 3 2 2 0 0 0 3 0l7-7" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -374,7 +352,6 @@
 
       <div class="cta">
         <button class="btn btn-primary" id="openAuth">
-          <!-- arrow icon -->
           <svg viewBox="0 0 24 24" width="22" height="22" fill="none">
             <path d="M10 17l5-5-5-5" stroke="#052127" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
             <path d="M4 12h11" stroke="#052127" stroke-width="2" stroke-linecap="round"/>
@@ -402,7 +379,6 @@
           Contact Support
         </a>
 
-        <!-- Adjust this URL to your employee portal path -->
         <a class="link" href="/internal/" id="employeeLink">
           <svg viewBox="0 0 24 24" fill="none">
             <path d="M4 4h16v16H4z" stroke="currentColor" stroke-width="2"/>
@@ -441,17 +417,17 @@
         </div>
 
         <div class="modal-actions">
-          <button class="btn btn-primary" type="submit" id="submitAuth">
-            Continue
-          </button>
+          <button class="btn btn-primary" type="submit" id="submitAuth">Continue</button>
           <div class="small">By continuing, you agree to keep client data confidential.</div>
         </div>
       </form>
     </div>
   </dialog>
 
+  <!-- ✅ Netlify Identity widget -->
+  <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+
   <script>
-    // ====== UI wiring (no backend assumptions yet) ======
     const modal = document.getElementById("authModal");
     const openAuth = document.getElementById("openAuth");
     const closeModal = document.getElementById("closeModal");
@@ -462,7 +438,7 @@
     const msgBox = document.getElementById("msgBox");
     const resetBtn = document.getElementById("resetBtn");
 
-    let mode = "signin"; // or "create"
+    let mode = "signin";
 
     function setMode(nextMode){
       mode = nextMode;
@@ -486,42 +462,59 @@
       setMode("signin");
       document.getElementById("email").focus();
     });
+
     closeModal.addEventListener("click", () => modal.close());
 
     modeSignIn.addEventListener("click", () => setMode("signin"));
     modeCreate.addEventListener("click", () => setMode("create"));
 
+    // ✅ Real Netlify password recovery
     resetBtn.addEventListener("click", () => {
-      // Hook this to your reset function later (/.netlify/functions/reset_password)
-      showMsg("Password reset will be enabled shortly. Contact support if urgent.", "ok");
-      modal.showModal();
+      if (window.netlifyIdentity) {
+        window.netlifyIdentity.open("recovery");
+      } else {
+        showMsg("Auth system not ready — refresh and try again.", "err");
+        modal.showModal();
+      }
     });
 
+    // ✅ Submit -> Netlify Identity login/signup
     authForm.addEventListener("submit", async (e) => {
       e.preventDefault();
 
       const email = document.getElementById("email").value.trim();
       const password = document.getElementById("password").value;
 
-      // TODO: wire to your Netlify Functions:
-      // - Sign in -> POST /.netlify/functions/login
-      // - Create -> POST /.netlify/functions/signup
-      // Both should return { token } then redirect
-
-      // Temporary behavior so UI feels real while we wire backend:
       if (!email || !password) return;
 
-      // placeholder: accept anything that looks like email for now
-      localStorage.setItem("forgeos_token", "dev-token");
-      localStorage.setItem("forgeos_email", email);
+      try {
+        if (!window.netlifyIdentity) throw new Error("Netlify Identity not loaded.");
 
-      showMsg(mode === "signin" ? "Signed in. Redirecting..." : "Account created. Redirecting...", "ok");
-
-      setTimeout(() => {
-        // Change this to your actual portal page when ready
-        window.location.href = "/index.html";
-      }, 700);
+        if (mode === "signin") {
+          showMsg("Signing in…", "ok");
+          await window.netlifyIdentity.login(email, password);
+        } else {
+          showMsg("Creating account…", "ok");
+          await window.netlifyIdentity.signup(email, password);
+        }
+        // redirect handled by identity event below
+      } catch (err) {
+        showMsg(err?.message || "Authentication failed", "err");
+      }
     });
+
+    // ✅ Handle post-auth redirect
+    if (window.netlifyIdentity) {
+      window.netlifyIdentity.on("login", () => {
+        showMsg("Signed in. Redirecting…", "ok");
+        setTimeout(() => window.location.href = "/index.html", 450);
+      });
+
+      window.netlifyIdentity.on("signup", () => {
+        showMsg("Account created. Redirecting…", "ok");
+        setTimeout(() => window.location.href = "/index.html", 450);
+      });
+    }
   </script>
 </body>
 </html>
